@@ -13,14 +13,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Docker login to Harbor (self-signed TLS 대응)
+      - name: Docker login to Harbor (vi HTTP)
         run: |
           echo "${{ secrets.HARBOR_PASSWORD }}" | \
-          docker login https://${{ secrets.HARBOR_URL }} \
+          docker login http://${{ secrets.HARBOR_URL }} \
           --username ${{ secrets.HARBOR_USERNAME }} \
-          --password-stdin || echo "⚠️ TLS 경고 무시됨"
+          --password-stdin 
 
-      - name: Build and Push Docker Image to Harbor
+      - name: Build and Push Image to Harbor
         run: |
           IMAGE_NAME=yolov8-demo
           PROJECT_NAME=library
