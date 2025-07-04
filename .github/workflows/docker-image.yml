@@ -22,7 +22,7 @@ jobs:
 
       - name: Build and Push Docker Image to Harbor
         run: |
-          IMAGE_NAME=Yolov8-demo
+          IMAGE_NAME=yolov8-demo
           PROJECT_NAME=library
           REGISTRY=${{ secrets.HARBOR_URL }}
           TAG=${{ github.run_number }}
