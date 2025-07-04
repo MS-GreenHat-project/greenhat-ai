@@ -1,0 +1,14 @@
+name: Test Harbor Connectivity
+
+on:
+  workflow_dispatch:  # 수동 실행
+
+jobs:
+  test-connection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check if Harbor is reachable
+        run: |
+          echo "Testing connectivity to Harbor..."
+          curl -vk https://${{ secrets.HARBOR_URL }} || echo "❌ Connection failed"
