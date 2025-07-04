@@ -1,0 +1,39 @@
+name: Build and Push Yolov8 Demo Image to Azure Container Registry
+
+on:
+  push:
+    branches:
+      - main  # 필요 시 master로 변경
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Azure CLI login with service principal
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Docker login to Azure Container Registry
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ secrets.REGISTRY_LOGIN_SERVER }} \
+            --username ${{ secrets.REGISTRY_USERNAME }} \
+            --password-stdin
+
+      - name: Build and Push Image to ACR
+        run: |
+          IMAGE_NAME=yolov8-demo
+          REGISTRY=${{ secrets.REGISTRY_LOGIN_SERVER }}
+          TAG=${{ github.run_number }}
+
+          FULL_IMAGE=$REGISTRY/$IMAGE_NAME:$TAG
+
+          echo "▶️ Building image: $FULL_IMAGE"
+          docker build -t $FULL_IMAGE .
+
+          echo "🚀 Pushing image to ACR"
+          docker push $FULL_IMAGE
