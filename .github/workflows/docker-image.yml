@@ -1,0 +1,36 @@
+name: Build and Push Yolov8 Demo Image to Harbor
+
+on:
+  push:
+    branches:
+      - main  # 혹은 master, 필요에 따라 수정
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Docker login to Harbor (self-signed TLS 대응)
+        run: |
+          echo "${{ secrets.HARBOR_PASSWORD }}" | \
+          docker login https://${{ secrets.HARBOR_URL }} \
+          --username ${{ secrets.HARBOR_USERNAME }} \
+          --password-stdin || echo "⚠️ TLS 경고 무시됨"
+
+      - name: Build and Push Docker Image to Harbor
+        run: |
+          IMAGE_NAME=Yolov8-demo
+          PROJECT_NAME=library
+          REGISTRY=${{ secrets.HARBOR_URL }}
+          TAG=${{ github.run_number }}
+
+          FULL_IMAGE=$REGISTRY/$PROJECT_NAME/$IMAGE_NAME:$TAG
+
+          echo "▶️ Building image: $FULL_IMAGE"
+          docker build -t $FULL_IMAGE .
+
+          echo "🚀 Pushing image to Harbor"
+          docker push $FULL_IMAGE
