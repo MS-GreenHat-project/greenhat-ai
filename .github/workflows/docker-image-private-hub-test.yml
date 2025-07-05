@@ -19,13 +19,13 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: "lbh1224"
-          password: "dckr_pat_wdXPksvUo4CfhN9sMNbSqWclQQ8"
+          password: "dckr_pat_OaQcCA3AcH9FHZPp7-WkM9RVHLk"
 
       # 3. Docker 이미지 빌드 및 푸시
       - name: 'Build and Push Docker Image'
         run: |
           IMAGE_NAME=lbh1224/web
-          TAG=${{ github.run_number }}
+          TAG="yolov8-demo"
           FULL_IMAGE=$IMAGE_NAME:$TAG
 
           echo "▶️ Building image: $FULL_IMAGE"
