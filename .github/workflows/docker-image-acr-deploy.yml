@@ -12,6 +12,7 @@ jobs:
     env:
       IMAGE_NAME: yolov8-demo
       IMAGE_TAG: ${{ github.run_number }}
+      IMAGE_PATH: manifests/deployment.yaml
 
     steps:
       # 1. GitHub Repo Checkout
@@ -37,3 +38,15 @@ jobs:
 
           echo "🚀 Pushing image to ACR"
           docker push $FULL_IMAGE
+
+          echo "📝 Updating deployment manifest with new image"
+          sed -i "s|image: .*$|image: $FULL_IMAGE|" $IMAGE_PATH
+
+      # 4. 푸시한 이미지로 manifest 이미지 경로 업데이트
+      - name: Commit and Push Updated Manifest
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add ${{ env.IMAGE_PATH }}
+          git commit -m "Update image to ${{ env.IMAGE_TAG }} [CI skip]" || echo "No changes to commit"
+          git push
