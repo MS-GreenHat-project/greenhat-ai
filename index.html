@@ -6,15 +6,24 @@
     <style>
         body { 
             font-family: Arial, sans-serif; 
-            text-align: center; 
             background-color: #f0f0f0;
             margin: 0;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         
         h2 {
             color: #333;
             margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #main-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
         }
         
         #container { 
@@ -38,17 +47,18 @@
             left: 0; 
         }
         
-        /* 경고등 스타일 */
+        /* 경보 패널 - 오른쪽 배치 */
         #warning-panel {
-            margin-top: 20px;
+            width: 300px;
             padding: 20px;
             border-radius: 10px;
             transition: all 0.3s ease;
-            min-height: 80px;
+            min-height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         #warning-panel.safe {
@@ -99,29 +109,25 @@
             opacity: 0.8;
         }
         
-        /* 상태 인디케이터 */
+        /* 상태 인디케이터 - 간소화 */
         #status-indicators {
-            margin-top: 15px;
+            margin-top: 20px;
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 10px;
         }
         
         .status-indicator {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 20px;
             font-weight: bold;
+            font-size: 14px;
             transition: all 0.3s ease;
         }
         
-        .helmet-detected {
-            background-color: #28a745;
+        .detection-active {
+            background-color: #17a2b8;
             color: white;
-        }
-        
-        .head-detected {
-            background-color: #ffc107;
-            color: #212529;
         }
         
         .no-detection {
@@ -150,32 +156,40 @@
             color: white;
         }
         
-        /* 통계 패널 */
+        /* 통계 패널 - 경보 패널 하단 */
         #stats-panel {
             margin-top: 20px;
             padding: 15px;
             background-color: white;
             border-radius: 10px;
             border: 1px solid #ddd;
-            display: inline-block;
+            width: 300px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .stat-item {
-            display: inline-block;
-            margin: 0 15px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
         }
         
-        .stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
+        .stat-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
         }
         
         .stat-label {
-            font-size: 12px;
+            font-size: 14px;
             color: #666;
-            text-transform: uppercase;
+        }
+        
+        .stat-number {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
         }
     </style>
 </head>
@@ -184,38 +198,41 @@
     
     <div id="connection-status" class="disconnected">연결 중...</div>
     
-    <div id="container">
-        <video id="video" autoplay muted playsinline></video>
-        <canvas id="canvas"></canvas>
+    <div id="main-content">
+        <div id="container">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <!-- 오른쪽 경보 패널 -->
+        <div id="right-panel">
+            <div id="warning-panel" class="safe">
+                <div class="warning-icon">⚠️</div>
+                <div class="warning-text">시스템 대기 중</div>
+                <div class="warning-detail">카메라 연결을 확인하세요</div>
+            </div>
+
+            <!-- 통계 패널 -->
+            <div id="stats-panel">
+                <div class="stat-item">
+                    <span class="stat-label">현재 상태</span>
+                    <span id="current-status" class="stat-number">대기 중</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">마지막 업데이트</span>
+                    <span id="last-update" class="stat-number">--:--</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">총 감지 횟수</span>
+                    <span id="total-detections" class="stat-number">0</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 경고등 패널 -->
-    <div id="warning-panel" class="safe">
-        <div class="warning-icon">⚠️</div>
-        <div class="warning-text">시스템 대기 중</div>
-        <div class="warning-detail">카메라 연결을 확인하세요</div>
-    </div>
-
-    <!-- 상태 인디케이터 -->
+    <!-- 하단 상태 인디케이터 -->
     <div id="status-indicators">
-        <div id="helmet-count" class="status-indicator no-detection">헬멧: 0명</div>
-        <div id="head-count" class="status-indicator no-detection">미착용: 0명</div>
-    </div>
-
-    <!-- 통계 패널 -->
-    <div id="stats-panel">
-        <div class="stat-item">
-            <div id="total-detections" class="stat-number">0</div>
-            <div class="stat-label">총 감지</div>
-        </div>
-        <div class="stat-item">
-            <div id="helmet-rate" class="stat-number">0%</div>
-            <div class="stat-label">착용률</div>
-        </div>
-        <div class="stat-item">
-            <div id="last-update" class="stat-number">--:--</div>
-            <div class="stat-label">마지막 업데이트</div>
-        </div>
+        <div id="detection-status" class="status-indicator no-detection">감지 대기 중</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
@@ -229,17 +246,14 @@
         // UI 요소들
         const warningPanel = document.getElementById('warning-panel');
         const connectionStatus = document.getElementById('connection-status');
-        const helmetCount = document.getElementById('helmet-count');
-        const headCount = document.getElementById('head-count');
+        const detectionStatus = document.getElementById('detection-status');
         const totalDetections = document.getElementById('total-detections');
-        const helmetRate = document.getElementById('helmet-rate');
+        const currentStatus = document.getElementById('current-status');
         const lastUpdate = document.getElementById('last-update');
         
         // 통계 변수
         let stats = {
-            totalDetections: 0,
-            helmetDetections: 0,
-            headDetections: 0
+            totalDetections: 0
         };
 
         // 카메라 시작
@@ -274,8 +288,8 @@
         socket.on('analysis_result', data => {
             context.clearRect(0, 0, canvas.width, canvas.height);
             
-            let currentHelmetCount = 0;
-            let currentHeadCount = 0;
+            let hasUnprotectedPerson = false;
+            let detectionCount = 0;
             
             // 바운딩 박스 그리기
             data.boxes.forEach((box, i) => {
@@ -298,20 +312,18 @@
                 context.fillStyle = color;
                 context.fillText(label, x, y > 20 ? y - 5 : y + h + 15);
                 
-                // 카운트 업데이트
-                if (classNames[cls] === 'helmet') {
-                    currentHelmetCount++;
-                    stats.helmetDetections++;
-                } else {
-                    currentHeadCount++;
-                    stats.headDetections++;
+                // 미착용자 체크
+                if (classNames[cls] === 'head') {
+                    hasUnprotectedPerson = true;
                 }
+                
+                detectionCount++;
                 stats.totalDetections++;
             });
             
             // UI 업데이트
-            updateCounts(currentHelmetCount, currentHeadCount);
-            updateWarningStatus(currentHelmetCount, currentHeadCount);
+            updateWarningStatus(hasUnprotectedPerson, detectionCount);
+            updateDetectionStatus(detectionCount);
             updateStats();
             updateLastUpdate();
         });
