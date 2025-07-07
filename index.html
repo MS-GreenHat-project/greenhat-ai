@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 개인 안전모 감지 시스템</title>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #1a1c23;
+            --panel-color: #252831;
+            --border-color: #3a3f4b;
+            --text-primary: #f0f2f5;
+            --text-secondary: #a0a8b4;
+            --accent-green: #29cc7a;
+            --accent-red: #ff4d4d;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1200px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #server-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: var(--panel-color);
+            border-radius: 8px;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+        }
+
+        #server-status .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--accent-red);
+            transition: background-color 0.3s ease;
+        }
+        
+        #server-status.connected .status-dot {
+            background-color: var(--accent-green);
+            animation: pulse-green 2s infinite;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background-color: var(--panel-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        #video-wrapper {
+            position: relative;
+            width: 100%;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        video {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #video-wrapper.warning-glow {
+            box-shadow: 0 0 25px var(--accent-red);
+        }
+
+        #status-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #status-icon {
+            margin-bottom: 16px;
+        }
+
+        #status-text {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .status-safe { color: var(--accent-green); }
+        .status-warning { color: var(--accent-red); }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 var(--accent-green); }
+            70% { box-shadow: 0 0 0 10px rgba(41, 204, 122, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(41, 204, 122, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1><i data-feather="hard-hat"></i>AI 개인 안전모 감지 시스템</h1>
+            <div id="server-status">
+                <div class="status-dot"></div>
+                <span id="status-label">서버 연결 중...</span>
+            </div>
+        </header>
+        <main class="main-content">
+            <div class="card">
+                <div class="card-header"><i data-feather="video"></i>실시간 영상 분석</div>
+                <div id="video-wrapper">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="canvas"></canvas>
+                </div>
+            </div>
+            <div class="card" id="status-panel">
+                <div class="card-header"><i data-feather="activity"></i>분석 상태</div>
+                <div id="status-icon">
+                    <!-- 아이콘은 JS로 동적 변경 -->
+                </div>
+                <div id="status-text">
+                    카메라를 초기화하고 있습니다...
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas'); // 눈에 보이는, 박스를 그릴 캔버스
+        const context = canvas.getContext('2d');
+        
+        // ✅ FIX: 서버로 보낼 이미지를 담을, 눈에 보이지 않는 별도의 캔버스 생성
+        const frameCanvas = document.createElement('canvas');
+        const frameContext = frameCanvas.getContext('2d');
+
+        const serverStatus = document.getElementById('server-status');
+        const statusLabel = document.getElementById('status-label');
+        const videoWrapper = document.getElementById('video-wrapper');
+        const statusIcon = document.getElementById('status-icon');
+        const statusText = document.getElementById('status-text');
+
+        // --- Config ---
+        const HEAD_CLASS_ID = 0;
+        const HELMET_CLASS_ID = 1;
+        const CLASS_NAMES = { [HEAD_CLASS_ID]: '미착용', [HELMET_CLASS_ID]: '안전모' };
+        const CLASS_COLORS = { [HEAD_CLASS_ID]: 'rgba(255, 77, 77, 0.9)', [HELMET_CLASS_ID]: 'rgba(41, 204, 122, 0.9)' };
+        const backend_url = 'http://127.0.0.1:5000';
+        const socket = io(backend_url);
+
+        // --- Socket.IO Handlers ---
+        socket.on('connect', () => {
+            serverStatus.classList.add('connected');
+            statusLabel.textContent = '온라인';
+            initCamera();
+        });
+
+        socket.on('disconnect', () => {
+            serverStatus.classList.remove('connected');
+            statusLabel.textContent = '오프라인';
+            updateStatus('disconnected');
+        });
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
+                });
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    // 보이지 않는 캔버스의 해상도를 비디오 원본 크기로 설정
+                    frameCanvas.width = video.videoWidth;
+                    frameCanvas.height = video.videoHeight;
+                    
+                    // ✅ FIX: ResizeObserver로 영상의 실제 크기 변화를 감지
+                    const resizeObserver = new ResizeObserver(entries => {
+                        for (let entry of entries) {
+                            const { width, height } = entry.contentRect;
+                            // 눈에 보이는 캔버스의 크기를 영상의 실제 크기와 동기화
+                            canvas.width = width;
+                            canvas.height = height;
+                            console.log(`🔄 캔버스 크기 동기화: ${width}x${height}`);
+                        }
+                    });
+                    
+                    resizeObserver.observe(video); // 비디오 요소 감시 시작
+
+                    setInterval(() => {
+                        socket.emit('analyze_frame', getFrameAsDataURL())
+                    }, 100);
+                    updateStatus('detecting');
+                };
+            } catch (err) {
+                updateStatus('no_camera');
+            }
+        }
+
+        function getFrameAsDataURL() {
+            // 보이지 않는 캔버스를 사용해 서버로 보낼 이미지 생성
+            frameContext.drawImage(video, 0, 0, frameCanvas.width, frameCanvas.height);
+            return frameCanvas.toDataURL('image/jpeg');
+        }
+
+        socket.on('analysis_result', (data) => {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            let isUnhelmeted = data.classes.some(cls => cls === HEAD_CLASS_ID);
+            
+            updateStatus(isUnhelmeted ? 'warning' : (data.boxes.length > 0 ? 'safe' : 'detecting'));
+
+            data.boxes.forEach((box, i) => drawBox(box, data.classes[i], data.conf[i]));
+        });
+
+        function drawBox(box, cls, conf) {
+            context.save();
+
+            const [x1, y1, x2, y2] = box;
+            const absX = x1 * canvas.width;
+            const absY = y1 * canvas.height;
+            const width = (x2 - x1) * canvas.width;
+            const height = (y2 - y1) * canvas.height;
+            
+            context.strokeStyle = CLASS_COLORS[cls] || 'white';
+            context.lineWidth = 3;
+            context.strokeRect(absX, absY, width, height);
+
+            const label = `${CLASS_NAMES[cls] || 'Object'} ${(conf * 100).toFixed(0)}%`;
+            context.font = 'bold 16px "Noto Sans KR"';
+            const textWidth = context.measureText(label).width;
+            
+            const labelY = absY > 30 ? absY - 5 : absY + 18;
+            const backgroundY = absY > 30 ? absY - 24 : absY;
+
+            context.fillStyle = CLASS_COLORS[cls] || 'white';
+            context.fillRect(absX, backgroundY, textWidth + 10, 24);
+            
+            context.fillStyle = '#fff';
+            context.fillText(label, absX + 5, labelY);
+
+            context.restore();
+        }
+
+        function updateStatus(status) {
+            let iconHtml = '';
+            let text = '';
+            let textColorClass = '';
+
+            videoWrapper.classList.remove('warning-glow');
+
+            switch(status) {
+                case 'warning':
+                    iconHtml = feather.icons['alert-triangle'].toSvg({ color: 'var(--accent-red)', width: 64, height: 64 });
+                    text = '경고<br>안전모 미착용 상태입니다.';
+                    textColorClass = 'status-warning';
+                    videoWrapper.classList.add('warning-glow');
+                    break;
+                case 'safe':
+                    iconHtml = feather.icons['check-circle'].toSvg({ color: 'var(--accent-green)', width: 64, height: 64 });
+                    text = '안전<br>정상적으로 착용했습니다.';
+                    textColorClass = 'status-safe';
+                    break;
+                case 'no_camera':
+                    iconHtml = feather.icons['video-off'].toSvg({ color: 'var(--text-secondary)', width: 64, height: 64 });
+                    text = '오류<br>카메라에 접근할 수 없습니다.';
+                    break;
+                case 'disconnected':
+                    iconHtml = feather.icons['wifi-off'].toSvg({ color: 'var(--text-secondary)', width: 64, height: 64 });
+                    text = '오프라인<br>서버 연결이 끊겼습니다.';
+                    break;
+                default: // 'detecting' or initial
+                    iconHtml = feather.icons.eye.toSvg({ color: 'var(--text-secondary)', width: 64, height: 64 });
+                    text = '감지 중...<br>화면에 모습을 보여주세요.';
+            }
+            statusIcon.innerHTML = iconHtml;
+            statusText.innerHTML = text;
+            statusText.className = textColorClass;
+        }
+
+        // Feather 아이콘 초기 렌더링
+        feather.replace();
+    </script>
+</body>
+</html>

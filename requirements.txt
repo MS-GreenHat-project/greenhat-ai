@@ -1,3 +1,6 @@
 ultralytics
-torch>=1.13.0
 opencv-python
+Flask
+flask-socketio
+Flask-Cors
+eventlet
