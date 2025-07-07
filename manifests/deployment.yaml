@@ -17,6 +17,6 @@ spec:
       - name: yolov8
         image: greenhat2registry.azurecr.io/yolov8-demo:11
         ports:
-        - containerPort: 80
+        - containerPort: 5000
       imagePullSecrets:
       - name: acr-secret
