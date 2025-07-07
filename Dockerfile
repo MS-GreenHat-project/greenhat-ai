@@ -14,12 +14,12 @@ COPY requirements.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # 모델, 코드, 영상 복사
-COPY inference.py ./
+COPY app.py ./
 COPY hemletYoloV8_100epochs.pt ./
 COPY helmet.mp4 ./
 
 # 결과 저장 경로 생성
 RUN mkdir -p /app/runs
 
-# 컨테이너 시작 시 inference 실행
-CMD ["python", "inference.py"]
+# 컨테이너 시작 시 app 실행
+CMD ["python", "app.py"]
