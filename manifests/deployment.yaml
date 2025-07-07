@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: greenhat-ai-app
-  namespace: default 
+  namespace: backend 
 spec:
   replicas: 3
   selector:
