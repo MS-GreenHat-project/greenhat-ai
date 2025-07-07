@@ -2,347 +2,379 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 개인 안전모 감지 시스템</title>
-    
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-
+    <title>실시간 헬멧 감지</title>
     <style>
-        :root {
-            --bg-color: #1a1c23;
-            --panel-color: #252831;
-            --border-color: #3a3f4b;
-            --text-primary: #f0f2f5;
-            --text-secondary: #a0a8b4;
-            --accent-green: #29cc7a;
-            --accent-red: #ff4d4d;
-        }
-
-        body, html {
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            background-color: #f0f0f0;
             margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .dashboard {
-            width: 100%;
-            max-width: 1200px;
-            padding: 24px;
-            box-sizing: border-box;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        #server-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background-color: var(--panel-color);
-            border-radius: 8px;
-            font-weight: 500;
-            border: 1px solid var(--border-color);
-        }
-
-        #server-status .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: var(--accent-red);
-            transition: background-color 0.3s ease;
+            padding: 20px;
         }
         
-        #server-status.connected .status-dot {
-            background-color: var(--accent-green);
-            animation: pulse-green 2s infinite;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
-        }
-
-        .card {
-            background-color: var(--panel-color);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 20px;
-            font-weight: 500;
+        h2 {
+            color: #333;
             margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
         }
         
-        #video-wrapper {
-            position: relative;
-            width: 100%;
-            background-color: #000;
-            border-radius: 8px;
+        #container { 
+            position: relative; 
+            display: inline-block;
+            border: 3px solid #ddd;
+            border-radius: 10px;
             overflow: hidden;
-            transition: box-shadow 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-
-        video {
+        
+        #video, #canvas { 
+            width: 640px; 
+            height: 480px; 
             display: block;
-            width: 100%;
-            height: auto;
         }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        
+        #canvas { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
         }
-
-        #video-wrapper.warning-glow {
-            box-shadow: 0 0 25px var(--accent-red);
-        }
-
-        #status-panel {
+        
+        /* 경고등 스타일 */
+        #warning-panel {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            min-height: 80px;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        #warning-panel.safe {
+            background-color: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        #warning-panel.warning {
+            background-color: #fff3cd;
+            border: 2px solid #ffeaa7;
+            color: #856404;
+            animation: pulse 1s infinite;
+        }
+        
+        #warning-panel.danger {
+            background-color: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+            animation: flashRed 0.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes flashRed {
+            0% { background-color: #f8d7da; }
+            50% { background-color: #dc3545; color: white; }
+            100% { background-color: #f8d7da; }
+        }
+        
+        .warning-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .warning-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .warning-detail {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+        
+        /* 상태 인디케이터 */
+        #status-indicators {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .status-indicator {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .helmet-detected {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .head-detected {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .no-detection {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        /* 연결 상태 표시 */
+        #connection-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        #connection-status.connected {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        #connection-status.disconnected {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        /* 통계 패널 */
+        #stats-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            display: inline-block;
+        }
+        
+        .stat-item {
+            display: inline-block;
+            margin: 0 15px;
             text-align: center;
         }
-
-        #status-icon {
-            margin-bottom: 16px;
-        }
-
-        #status-text {
+        
+        .stat-number {
             font-size: 24px;
-            font-weight: 700;
-            line-height: 1.4;
+            font-weight: bold;
+            color: #333;
         }
-
-        .status-safe { color: var(--accent-green); }
-        .status-warning { color: var(--accent-red); }
-
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 var(--accent-green); }
-            70% { box-shadow: 0 0 0 10px rgba(41, 204, 122, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(41, 204, 122, 0); }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <header>
-            <h1><i data-feather="hard-hat"></i>AI 개인 안전모 감지 시스템</h1>
-            <div id="server-status">
-                <div class="status-dot"></div>
-                <span id="status-label">서버 연결 중...</span>
-            </div>
-        </header>
-        <main class="main-content">
-            <div class="card">
-                <div class="card-header"><i data-feather="video"></i>실시간 영상 분석</div>
-                <div id="video-wrapper">
-                    <video id="video" autoplay muted playsinline></video>
-                    <canvas id="canvas"></canvas>
-                </div>
-            </div>
-            <div class="card" id="status-panel">
-                <div class="card-header"><i data-feather="activity"></i>분석 상태</div>
-                <div id="status-icon">
-                    <!-- 아이콘은 JS로 동적 변경 -->
-                </div>
-                <div id="status-text">
-                    카메라를 초기화하고 있습니다...
-                </div>
-            </div>
-        </main>
+    <h2>🚧 실시간 헬멧 감지 시스템</h2>
+    
+    <div id="connection-status" class="disconnected">연결 중...</div>
+    
+    <div id="container">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas"></canvas>
     </div>
 
+    <!-- 경고등 패널 -->
+    <div id="warning-panel" class="safe">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-text">시스템 대기 중</div>
+        <div class="warning-detail">카메라 연결을 확인하세요</div>
+    </div>
+
+    <!-- 상태 인디케이터 -->
+    <div id="status-indicators">
+        <div id="helmet-count" class="status-indicator no-detection">헬멧: 0명</div>
+        <div id="head-count" class="status-indicator no-detection">미착용: 0명</div>
+    </div>
+
+    <!-- 통계 패널 -->
+    <div id="stats-panel">
+        <div class="stat-item">
+            <div id="total-detections" class="stat-number">0</div>
+            <div class="stat-label">총 감지</div>
+        </div>
+        <div class="stat-item">
+            <div id="helmet-rate" class="stat-number">0%</div>
+            <div class="stat-label">착용률</div>
+        </div>
+        <div class="stat-item">
+            <div id="last-update" class="stat-number">--:--</div>
+            <div class="stat-label">마지막 업데이트</div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <script>
-        // --- DOM Elements ---
+        const socket = io.connect('http://127.0.0.1:5000');
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas'); // 눈에 보이는, 박스를 그릴 캔버스
+        const canvas = document.getElementById('canvas');
         const context = canvas.getContext('2d');
+        const classNames = ['head', 'helmet'];
         
-        // ✅ FIX: 서버로 보낼 이미지를 담을, 눈에 보이지 않는 별도의 캔버스 생성
-        const frameCanvas = document.createElement('canvas');
-        const frameContext = frameCanvas.getContext('2d');
+        // UI 요소들
+        const warningPanel = document.getElementById('warning-panel');
+        const connectionStatus = document.getElementById('connection-status');
+        const helmetCount = document.getElementById('helmet-count');
+        const headCount = document.getElementById('head-count');
+        const totalDetections = document.getElementById('total-detections');
+        const helmetRate = document.getElementById('helmet-rate');
+        const lastUpdate = document.getElementById('last-update');
+        
+        // 통계 변수
+        let stats = {
+            totalDetections: 0,
+            helmetDetections: 0,
+            headDetections: 0
+        };
 
-        const serverStatus = document.getElementById('server-status');
-        const statusLabel = document.getElementById('status-label');
-        const videoWrapper = document.getElementById('video-wrapper');
-        const statusIcon = document.getElementById('status-icon');
-        const statusText = document.getElementById('status-text');
+        // 카메라 시작
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            video.srcObject = stream;
+            updateWarningPanel('safe', '📹', '카메라 연결됨', '서버 연결을 기다리는 중...');
+        }).catch(err => {
+            console.error('카메라 오류:', err);
+            updateWarningPanel('danger', '❌', '카메라 오류', '카메라 접근을 허용해주세요');
+        });
 
-        // --- Config ---
-        const HEAD_CLASS_ID = 0;
-        const HELMET_CLASS_ID = 1;
-        const CLASS_NAMES = { [HEAD_CLASS_ID]: '미착용', [HELMET_CLASS_ID]: '안전모' };
-        const CLASS_COLORS = { [HEAD_CLASS_ID]: 'rgba(255, 77, 77, 0.9)', [HELMET_CLASS_ID]: 'rgba(41, 204, 122, 0.9)' };
-        const backend_url = 'http://127.0.0.1:5000';
-        const socket = io(backend_url);
-
-        // --- Socket.IO Handlers ---
+        // 소켓 연결
         socket.on('connect', () => {
-            serverStatus.classList.add('connected');
-            statusLabel.textContent = '온라인';
-            initCamera();
+            console.log('✅ 연결됨');
+            connectionStatus.textContent = '연결됨';
+            connectionStatus.className = 'connected';
+            updateWarningPanel('safe', '✅', '시스템 준비됨', '헬멧 감지를 시작합니다');
+            
+            // 프레임 전송 시작
+            setInterval(() => {
+                if (video.videoWidth === 0) return;
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataURL = canvas.toDataURL('image/jpeg');
+                socket.emit('analyze_frame', dataURL);
+            }, 300);
         });
 
-        socket.on('disconnect', () => {
-            serverStatus.classList.remove('connected');
-            statusLabel.textContent = '오프라인';
-            updateStatus('disconnected');
-        });
-
-        async function initCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
-                });
-                video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    // 보이지 않는 캔버스의 해상도를 비디오 원본 크기로 설정
-                    frameCanvas.width = video.videoWidth;
-                    frameCanvas.height = video.videoHeight;
-                    
-                    // ✅ FIX: ResizeObserver로 영상의 실제 크기 변화를 감지
-                    const resizeObserver = new ResizeObserver(entries => {
-                        for (let entry of entries) {
-                            const { width, height } = entry.contentRect;
-                            // 눈에 보이는 캔버스의 크기를 영상의 실제 크기와 동기화
-                            canvas.width = width;
-                            canvas.height = height;
-                            console.log(`🔄 캔버스 크기 동기화: ${width}x${height}`);
-                        }
-                    });
-                    
-                    resizeObserver.observe(video); // 비디오 요소 감시 시작
-
-                    setInterval(() => {
-                        socket.emit('analyze_frame', getFrameAsDataURL())
-                    }, 100);
-                    updateStatus('detecting');
-                };
-            } catch (err) {
-                updateStatus('no_camera');
-            }
-        }
-
-        function getFrameAsDataURL() {
-            // 보이지 않는 캔버스를 사용해 서버로 보낼 이미지 생성
-            frameContext.drawImage(video, 0, 0, frameCanvas.width, frameCanvas.height);
-            return frameCanvas.toDataURL('image/jpeg');
-        }
-
-        socket.on('analysis_result', (data) => {
+        // 분석 결과 처리
+        socket.on('analysis_result', data => {
             context.clearRect(0, 0, canvas.width, canvas.height);
-            let isUnhelmeted = data.classes.some(cls => cls === HEAD_CLASS_ID);
             
-            updateStatus(isUnhelmeted ? 'warning' : (data.boxes.length > 0 ? 'safe' : 'detecting'));
+            let currentHelmetCount = 0;
+            let currentHeadCount = 0;
+            
+            // 바운딩 박스 그리기
+            data.boxes.forEach((box, i) => {
+                const [x1, y1, x2, y2] = box;
+                const cls = data.classes[i];
+                const conf = data.conf[i];
 
-            data.boxes.forEach((box, i) => drawBox(box, data.classes[i], data.conf[i]));
+                const x = x1 * canvas.width;
+                const y = y1 * canvas.height;
+                const w = (x2 - x1) * canvas.width;
+                const h = (y2 - y1) * canvas.height;
+
+                const color = classNames[cls] === 'helmet' ? 'lime' : 'red';
+                const label = `${classNames[cls]} ${conf.toFixed(2)}`;
+
+                context.strokeStyle = color;
+                context.lineWidth = 3;
+                context.strokeRect(x, y, w, h);
+                context.font = '16px Arial';
+                context.fillStyle = color;
+                context.fillText(label, x, y > 20 ? y - 5 : y + h + 15);
+                
+                // 카운트 업데이트
+                if (classNames[cls] === 'helmet') {
+                    currentHelmetCount++;
+                    stats.helmetDetections++;
+                } else {
+                    currentHeadCount++;
+                    stats.headDetections++;
+                }
+                stats.totalDetections++;
+            });
+            
+            // UI 업데이트
+            updateCounts(currentHelmetCount, currentHeadCount);
+            updateWarningStatus(currentHelmetCount, currentHeadCount);
+            updateStats();
+            updateLastUpdate();
         });
 
-        function drawBox(box, cls, conf) {
-            context.save();
+        // 연결 해제
+        socket.on('disconnect', () => {
+            console.log('❌ 연결 종료');
+            connectionStatus.textContent = '연결 끊김';
+            connectionStatus.className = 'disconnected';
+            updateWarningPanel('danger', '❌', '연결 끊김', '서버와의 연결이 끊어졌습니다');
+        });
 
-            const [x1, y1, x2, y2] = box;
-            const absX = x1 * canvas.width;
-            const absY = y1 * canvas.height;
-            const width = (x2 - x1) * canvas.width;
-            const height = (y2 - y1) * canvas.height;
-            
-            context.strokeStyle = CLASS_COLORS[cls] || 'white';
-            context.lineWidth = 3;
-            context.strokeRect(absX, absY, width, height);
-
-            const label = `${CLASS_NAMES[cls] || 'Object'} ${(conf * 100).toFixed(0)}%`;
-            context.font = 'bold 16px "Noto Sans KR"';
-            const textWidth = context.measureText(label).width;
-            
-            const labelY = absY > 30 ? absY - 5 : absY + 18;
-            const backgroundY = absY > 30 ? absY - 24 : absY;
-
-            context.fillStyle = CLASS_COLORS[cls] || 'white';
-            context.fillRect(absX, backgroundY, textWidth + 10, 24);
-            
-            context.fillStyle = '#fff';
-            context.fillText(label, absX + 5, labelY);
-
-            context.restore();
+        // 경고 패널 업데이트
+        function updateWarningPanel(type, icon, text, detail) {
+            warningPanel.className = type;
+            warningPanel.querySelector('.warning-icon').textContent = icon;
+            warningPanel.querySelector('.warning-text').textContent = text;
+            warningPanel.querySelector('.warning-detail').textContent = detail;
         }
 
-        function updateStatus(status) {
-            let iconHtml = '';
-            let text = '';
-            let textColorClass = '';
-
-            videoWrapper.classList.remove('warning-glow');
-
-            switch(status) {
-                case 'warning':
-                    iconHtml = feather.icons['alert-triangle'].toSvg({ color: 'var(--accent-red)', width: 64, height: 64 });
-                    text = '경고<br>안전모 미착용 상태입니다.';
-                    textColorClass = 'status-warning';
-                    videoWrapper.classList.add('warning-glow');
-                    break;
-                case 'safe':
-                    iconHtml = feather.icons['check-circle'].toSvg({ color: 'var(--accent-green)', width: 64, height: 64 });
-                    text = '안전<br>정상적으로 착용했습니다.';
-                    textColorClass = 'status-safe';
-                    break;
-                case 'no_camera':
-                    iconHtml = feather.icons['video-off'].toSvg({ color: 'var(--text-secondary)', width: 64, height: 64 });
-                    text = '오류<br>카메라에 접근할 수 없습니다.';
-                    break;
-                case 'disconnected':
-                    iconHtml = feather.icons['wifi-off'].toSvg({ color: 'var(--text-secondary)', width: 64, height: 64 });
-                    text = '오프라인<br>서버 연결이 끊겼습니다.';
-                    break;
-                default: // 'detecting' or initial
-                    iconHtml = feather.icons.eye.toSvg({ color: 'var(--text-secondary)', width: 64, height: 64 });
-                    text = '감지 중...<br>화면에 모습을 보여주세요.';
+        // 경고 상태 업데이트
+        function updateWarningStatus(helmetCount, headCount) {
+            if (headCount > 0) {
+                // 헬멧 미착용자가 있을 때
+                updateWarningPanel('danger', '🚨', '헬멧 미착용 감지!', `${headCount}명이 헬멧을 착용하지 않았습니다`);
+            } else if (helmetCount > 0) {
+                // 모든 사람이 헬멧을 착용했을 때
+                updateWarningPanel('safe', '✅', '안전 상태', `${helmetCount}명이 헬멧을 착용했습니다`);
+            } else {
+                // 아무도 감지되지 않았을 때
+                updateWarningPanel('warning', '👁️', '감지 대기 중', '작업자를 찾고 있습니다');
             }
-            statusIcon.innerHTML = iconHtml;
-            statusText.innerHTML = text;
-            statusText.className = textColorClass;
         }
 
-        // Feather 아이콘 초기 렌더링
-        feather.replace();
+        // 카운트 업데이트
+        function updateCounts(helmetCount, headCount) {
+            helmetCount.textContent = `헬멧: ${helmetCount}명`;
+            headCount.textContent = `미착용: ${headCount}명`;
+            
+            // 스타일 업데이트
+            helmetCount.className = `status-indicator ${helmetCount > 0 ? 'helmet-detected' : 'no-detection'}`;
+            headCount.className = `status-indicator ${headCount > 0 ? 'head-detected' : 'no-detection'}`;
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            totalDetections.textContent = stats.totalDetections;
+            
+            const rate = stats.totalDetections > 0 ? 
+                Math.round((stats.helmetDetections / stats.totalDetections) * 100) : 0;
+            helmetRate.textContent = `${rate}%`;
+        }
+
+        // 마지막 업데이트 시간
+        function updateLastUpdate() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ko-KR', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            lastUpdate.textContent = timeString;
+        }
     </script>
 </body>
 </html>
