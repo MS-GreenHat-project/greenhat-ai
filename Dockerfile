@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.9-slim
 
 # 컨테이너 내의 작업 디렉토리 설정
 WORKDIR /app

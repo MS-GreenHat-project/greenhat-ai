@@ -1,7 +1,10 @@
-ultralytics
-opencv-python
-Flask
+flask
 flask-socketio
-Flask-Cors
-eventlet
+flask-cors
+opencv-python-headless
+numpy
+ultralytics
+Pillow
+torch
 gunicorn
+eventlet

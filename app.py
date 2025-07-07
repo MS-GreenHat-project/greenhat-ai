@@ -10,7 +10,6 @@ import io
 import torch
 
 app = Flask(__name__)
-# 로컬 개발 시 eventlet이 설치되어 있어야 합니다.
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 CORS(app)
 
@@ -57,8 +56,3 @@ def analyze_frame(data_url):
     except Exception as e:
         print(f"❌ 분석 중 오류: {e}")
 
-# Windows에서 직접 실행하기 위한 코드
-if __name__ == '__main__':
-    print("🚀 Windows 개발 서버 시작 중... http://127.0.0.1:5000")
-    # host='0.0.0.0'으로 설정하여 같은 네트워크의 다른 기기에서도 접속 가능
-    socketio.run(app, host='0.0.0.0', port=5000)
