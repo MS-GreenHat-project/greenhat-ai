@@ -7,6 +7,8 @@ WORKDIR /app
 # libgl1-mesa-glx와 libglib2.0-0은 headless 환경에서 OpenCV가 의존하는 라이브러리입니다.
 RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
 
+ENV YOLO_CONFIG_DIR=/tmp
+
 # 필요한 라이브러리 목록 파일을 먼저 복사
 COPY requirements.txt .
 
