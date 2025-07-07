@@ -13,10 +13,9 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# 모델, 코드, 영상 복사
+# 모델, 코드 복사
 COPY app.py ./
 COPY hemletYoloV8_100epochs.pt ./
-COPY helmet.mp4 ./
 
 # 결과 저장 경로 생성
 RUN mkdir -p /app/runs
