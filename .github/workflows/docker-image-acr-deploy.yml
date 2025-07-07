@@ -3,7 +3,7 @@ name: Build and Push Yolov8 Demo Image to ACR
 on:
   push:
     branches:
-      - main  # 필요 시 master로 변경
+      - hjh  # 필요 시 master로 변경
 
 jobs:
   build-and-push:
