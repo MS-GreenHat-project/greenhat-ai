@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: greenhat-yolov8-app
+  name: greenhat-ai-app
   namespace: default 
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: greenhat-yolov8-app
+      app: greenhat-ai-app
   template:
     metadata:
       labels:
-        app: greenhat-yolov8-app
+        app: greenhat-ai-app
     spec:
       containers:
       - name: yolov8
