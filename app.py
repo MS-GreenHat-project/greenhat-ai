@@ -17,6 +17,11 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 CORS(app)
 
+# Application Gateway 상태 확인(Health Probe)을 위한 루트 경로 추가
+@app.route('/')
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
 # 모델 로드
 try:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
