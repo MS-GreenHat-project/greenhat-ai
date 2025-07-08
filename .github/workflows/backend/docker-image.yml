@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main  # 혹은 master, 필요에 따라 수정
+    paths:
+      - 'app.py'              # Flask 애플리케이션
+      - 'requirements.txt'    # Python 의존성
+      - 'Dockerfile'          # Docker 빌드 파일
+      - '*.py'               # 모든 Python 파일
+      - '.github/workflows/backend/**'  # 백엔드 워크플로우 변경시
 
 jobs:
   build-and-push:

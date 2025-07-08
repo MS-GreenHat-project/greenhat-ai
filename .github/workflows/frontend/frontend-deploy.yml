@@ -6,10 +6,13 @@ on:
       - main
       - hjh  # 현재 사용 중인 브랜치
     paths:
-      - 'index.html'  # index.html 파일 변경 시에만 트리거
-      - 'assets/**'   # assets 폴더 변경 시에도 트리거 (필요시)
-      - 'css/**'      # CSS 파일 변경 시에도 트리거 (필요시)
-      - 'js/**'       # JS 파일 변경 시에도 트리거 (필요시)
+      - 'index.html'          # 메인 HTML 파일
+      - 'assets/**'           # 정적 자산 파일들
+      - 'css/**'              # CSS 파일들
+      - 'js/**'               # JavaScript 파일들
+      - 'images/**'           # 이미지 파일들
+      - '*.html'              # 모든 HTML 파일들
+      - '.github/workflows/frontend/**'  # 프론트엔드 워크플로우 변경시
 
 jobs:
   deploy-frontend:
