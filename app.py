@@ -8,6 +8,10 @@ import base64
 from PIL import Image
 import io
 import torch
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
@@ -18,18 +22,18 @@ try:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = YOLO("hemletYoloV8_100epochs.pt").to(device)
     class_names = model.names
-    print(f"✅ 모델 로드 성공. 클래스: {class_names} | 디바이스: {device}")
+    logger.info(f"✅ 모델 로드 성공. 클래스: {class_names} | 디바이스: {device}")
 except Exception as e:
-    print(f"❌ 모델 로드 실패: {e}")
+    logger.info(f"❌ 모델 로드 실패: {e}")
     model = None
 
 @socketio.on('connect')
 def connect():
-    print("✅ 클라이언트 연결됨.")
+    logger.info("✅ 클라이언트 연결됨.")
 
 @socketio.on('disconnect')
 def disconnect():
-    print("❌ 클라이언트 연결 종료.")
+    logger.info("❌ 클라이언트 연결 종료.")
 
 @socketio.on('analyze_frame')
 def analyze_frame(data_url):
@@ -54,5 +58,5 @@ def analyze_frame(data_url):
             "conf": boxes.conf[mask].tolist()
         })
     except Exception as e:
-        print(f"❌ 분석 중 오류: {e}")
+        logger.info(f"❌ 분석 중 오류: {e}")
 
