@@ -1,0 +1,102 @@
+name: Deploy Frontend to Azure Storage and CDN
+
+on:
+  push:
+    branches:
+      - hjh  # 현재 사용 중인 브랜치
+    paths:
+      - 'index.html'  # index.html 파일 변경 시에만 트리거
+      - 'assets/**'   # assets 폴더 변경 시에도 트리거 (필요시)
+      - 'css/**'      # CSS 파일 변경 시에도 트리거 (필요시)
+      - 'js/**'       # JS 파일 변경 시에도 트리거 (필요시)
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    
+    env:
+      STORAGE_ACCOUNT: greenhat111
+      CONTAINER_NAME: '$web'
+      CDN_PROFILE: greenhat-profile
+      CDN_ENDPOINT: greenhat
+      RESOURCE_GROUP: Green-Hat
+
+    steps:
+      # 1. GitHub Repo Checkout
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      # 2. Azure CLI 로그인
+      - name: 'Login to Azure'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # 3. 정적 파일들을 Azure Storage에 업로드
+      - name: 'Upload files to Azure Storage'
+        run: |
+          echo "📁 Uploading files to Storage Account: ${{ env.STORAGE_ACCOUNT }}"
+          
+          # index.html 업로드
+          az storage blob upload \
+            --account-name ${{ env.STORAGE_ACCOUNT }} \
+            --container-name '${{ env.CONTAINER_NAME }}' \
+            --name index.html \
+            --file index.html \
+            --content-type "text/html" \
+            --overwrite
+          
+          echo "✅ index.html uploaded successfully"
+          
+          # 추가 정적 파일들이 있다면 업로드 (선택사항)
+          if [ -d "assets" ]; then
+            echo "📁 Uploading assets folder..."
+            az storage blob upload-batch \
+              --account-name ${{ env.STORAGE_ACCOUNT }} \
+              --destination '${{ env.CONTAINER_NAME }}' \
+              --source assets \
+              --destination-path assets \
+              --overwrite
+          fi
+          
+          if [ -d "css" ]; then
+            echo "📁 Uploading CSS files..."
+            az storage blob upload-batch \
+              --account-name ${{ env.STORAGE_ACCOUNT }} \
+              --destination '${{ env.CONTAINER_NAME }}' \
+              --source css \
+              --destination-path css \
+              --overwrite
+          fi
+          
+          if [ -d "js" ]; then
+            echo "📁 Uploading JS files..."
+            az storage blob upload-batch \
+              --account-name ${{ env.STORAGE_ACCOUNT }} \
+              --destination '${{ env.CONTAINER_NAME }}' \
+              --source js \
+              --destination-path js \
+              --overwrite
+          fi
+
+      # 4. Azure Front Door CDN 캐시 퍼지
+      - name: 'Purge CDN Cache'
+        run: |
+          echo "🔄 Purging CDN cache for Front Door endpoint..."
+          az afd endpoint purge \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --profile-name ${{ env.CDN_PROFILE }} \
+            --endpoint-name ${{ env.CDN_ENDPOINT }} \
+            --content-paths "/*"
+          
+          echo "✅ CDN cache purged successfully"
+
+      # 5. 배포 완료 알림
+      - name: 'Deployment Summary'
+        run: |
+          echo "🚀 Frontend deployment completed!"
+          echo "📍 Storage Account: ${{ env.STORAGE_ACCOUNT }}"
+          echo "🌐 CDN Endpoint: https://greenhat-bzcacegbe8gtdrd0.a02.azurefd.net"
+          echo "📝 Files updated: index.html"
+          echo "🔄 CDN cache has been purged"
+          echo "⏰ Deployment time: $(date)"
