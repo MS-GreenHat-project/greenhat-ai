@@ -3,7 +3,6 @@ name: Deploy Frontend to Azure Storage
 on:
   push:
     branches:
-      - main
       - hjh  # 현재 사용 중인 브랜치
     paths:
       - 'index.html'          # 메인 HTML 파일

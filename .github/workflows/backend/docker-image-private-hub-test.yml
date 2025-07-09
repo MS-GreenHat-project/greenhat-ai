@@ -3,7 +3,7 @@ name: Build and Push Yolov8 Demo Image to Docker Hub
 on:
   push:
     branches:
-      - main
+      - hjh 
 
 jobs:
   build-and-push:

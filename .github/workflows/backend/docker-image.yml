@@ -3,7 +3,7 @@ name: Build and Push Yolov8 Demo Image to Harbor
 on:
   push:
     branches:
-      - main  # 혹은 master, 필요에 따라 수정
+      - hjh  # 혹은 master, 필요에 따라 수정
     paths:
       - 'app.py'              # Flask 애플리케이션
       - 'requirements.txt'    # Python 의존성
