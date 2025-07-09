@@ -67,4 +67,3 @@ def analyze_frame(data_url):
         })
     except Exception as e:
         logger.info(f"❌ 분석 중 오류: {e}")
-
