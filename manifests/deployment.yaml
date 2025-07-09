@@ -18,5 +18,12 @@ spec:
         image: greenhat2registry.azurecr.io/yolov8-demo:22
         ports:
         - containerPort: 5000
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "200m"
+        limits:
+          memory: "1Gi"
+          cpu: "1000m"
       imagePullSecrets:
       - name: acr-secret
