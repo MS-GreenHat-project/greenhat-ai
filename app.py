@@ -19,10 +19,13 @@ CORS(app)
 
 # Application Gateway 상태 확인(Health Probe)을 위한 루트 경로 추가
 @app.route('/health')
-def health_check():
-    return jsonify({"status": "healthy"}), 200
+def azure_health_probe():
+    return 'OK', 200
 
-# 모델 로드
+@app.route('/')
+def azure_probe():
+    return 'OK', 200
+
 try:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = YOLO("hemletYoloV8_100epochs.pt").to(device)
