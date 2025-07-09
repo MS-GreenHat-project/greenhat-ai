@@ -22,8 +22,9 @@ CORS(app)
 def azure_health_probe():
     return 'OK', 200
 
-
-# 모델 로드#
+@app.route('/')
+def azure_probe():
+    return 'OK', 200
 
 try:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
