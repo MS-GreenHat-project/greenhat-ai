@@ -194,7 +194,7 @@
     </style>
 </head>
 <body>
-    <h2>⛑️ 실시간 헬멧 감지 시스템</h2>
+    <h2>🚧 실시간 헬멧 감지 시스템</h2>
     
     <div id="connection-status" class="disconnected">연결 중...</div>
     
@@ -237,7 +237,15 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
     <script>
-        const socket = io.connect('http://server.datacat.store');
+        // ❗️ IP가 아닌 도메인을 사용하고, https로 접속해야 합니다.
+        const socket = io("https://server.datacat.store", {
+
+  // ❗️ 서버와 Ingress에 설정된 것과 동일한 경로를 명시해야 합니다.
+             path: "/socket.io/",
+  
+  // ❗️ WebSocket을 우선적으로 사용하도록 설정하는 것이 좋습니다.
+             transports: ["websocket"]
+        });
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const context = canvas.getContext('2d');
