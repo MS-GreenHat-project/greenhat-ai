@@ -18,6 +18,13 @@ spec:
         image: greenhat2registry.azurecr.io/yolov8-demo:24
         ports:
         - containerPort: 5000
+        env:
+        - name: AZURE_CONNECTION_STRING # app.py에서 읽을 환경변수 이름
+          valueFrom:
+            secretKeyRef:
+              name: azure-secret      # 1단계에서 생성한 Secret의 이름
+              key: AZURE_CONNECTION_STRING # Secret 안에 있는 데이터의 키(key) 이름
+        
       resources:
         requests:
           memory: "512Mi"

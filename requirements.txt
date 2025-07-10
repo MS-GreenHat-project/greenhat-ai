@@ -8,3 +8,4 @@ Pillow
 torch
 gunicorn
 eventlet
+azure-storage-file-datalake
