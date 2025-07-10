@@ -89,14 +89,13 @@ def disconnect():
         del last_capture_times[request.sid]
     logger.info(f"❌ 클라이언트 연결 종료. SID: {request.sid}")
 
-# --- 프레임 분석 로직 ---
 @socketio.on('analyze_frame')
 def analyze_frame(data_url):
     if not model:
         return
-        
+
     session_id = request.sid
-    logger.info(f"➡️ [{session_id}] analyze_frame 함수 호출됨.") # 함수 호출 확인
+    logger.info(f"➡️ [{session_id}] analyze_frame 함수 호출됨.")  # 함수 호출 확인
 
     try:
         current_time = time.time()
@@ -104,7 +103,7 @@ def analyze_frame(data_url):
 
         header, encoded = data_url.split(",", 1)
         image_data = base64.b64decode(encoded)
-        
+
         image = Image.open(io.BytesIO(image_data))
         frame = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         results = model(frame, verbose=False, imgsz=416)
@@ -112,24 +111,36 @@ def analyze_frame(data_url):
 
         conf_threshold = 0.5
         mask = boxes.conf > conf_threshold
-        
-        detected_classes = boxes.cls[mask].tolist()
-        logger.info(f"[DEBUG] 탐지된 클래스 (신뢰도>{conf_threshold}): {detected_classes}") # 탐지된 클래스 확인
 
-        # 클래스 0('head') 또는 클래스 1('helmet') 감지 시 업로드
+        detected_classes = boxes.cls[mask].tolist()
+        logger.info(f"[DEBUG] 탐지된 클래스 (신뢰도>{conf_threshold}): {detected_classes}")  # 탐지된 클래스 확인
+
+        # head(0.0) 또는 helmet(1.0) 감지 시
         if 0.0 in detected_classes or 1.0 in detected_classes:
-            #if last_capture is None or (current_time - last_capture) > CAPTURE_COOLDOWN_SECONDS: #잠시 주석처리
-                
-                upload_class_name = "head" if 0.0 in detected_classes else "helmet"
-                
+            upload_class_name = "head" if 0.0 in detected_classes else "helmet"
+
+            # 쿨다운 조건 확인
+            if last_capture is None or (current_time - last_capture) > CAPTURE_COOLDOWN_SECONDS:
                 logger.info(f"🚨 [{session_id}] '{upload_class_name}' 감지! 업로드를 시도합니다.")
-                upload_to_datalake(
+                logger.info("[DEBUG] upload_to_datalake 함수 진입")
+
+                uploaded_file = upload_to_datalake(
                     file_system_name=AZURE_CONTAINER_NAME,
                     frame_data=image_data,
                     class_name=upload_class_name
                 )
                 last_capture_times[session_id] = current_time
-        
+
+                # 업로드 성공/실패 결과 emit
+                if uploaded_file:
+                    emit('upload_result', {"status": "success", "file": uploaded_file})
+                else:
+                    emit('upload_result', {"status": "fail"})
+            else:
+                logger.info(f"[DEBUG] 쿨다운 때문에 업로드 건너뜀. "
+                            f"(남은 시간: {CAPTURE_COOLDOWN_SECONDS - (current_time - last_capture):.1f}초)")
+
+        # 분석 결과 emit
         emit('analysis_result', {
             "boxes": boxes.xyxyn[mask].tolist(),
             "classes": detected_classes,
