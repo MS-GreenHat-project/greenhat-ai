@@ -24,7 +24,8 @@ spec:
             secretKeyRef:
               name: azure-secret      # 1단계에서 생성한 Secret의 이름
               key: AZURE_CONNECTION_STRING # Secret 안에 있는 데이터의 키(key) 이름
-        
+        - name: AZURE_CONTAINER_NAME
+          value: "traing-image"     # 원하시는 컨테이너 이름을 여기에 입력
       resources:
         requests:
           memory: "512Mi"
