@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet', path='/socket.io/')
+socketio = SocketIO(app, cors_allowed_origins="https://datacat.store", async_mode='eventlet', path='/socket.io/')
 CORS(app)
 
 # --- Azure DataLake 연결 설정 ---
@@ -72,7 +72,7 @@ def azure_probe():
 try:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = YOLO("hemletYoloV8_100epochs.pt").to(device)
-    class_names = model.names
+    class_names = model.names   
     logger.info(f"✅ 모델 로드 성공. 클래스: {class_names} | 디바이스: {device}")
 except Exception as e:
     logger.error(f"❌ 모델 로드 실패: {e}")
