@@ -49,7 +49,7 @@ def upload_to_datalake(file_system_name, frame_data, class_name):
     try:
         file_system_client = datalake_service_client.get_file_system_client(file_system=file_system_name)
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        file_name = f"{class_name}/{timestamp}.jpg"
+        file_name = f"{class_name}_{timestamp}.jpg"
         
         file_client = file_system_client.get_file_client(file_name)
         file_client.create_file()
