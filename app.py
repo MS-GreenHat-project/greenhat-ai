@@ -71,9 +71,13 @@ def azure_probe():
     return 'OK', 200
 try:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = YOLO("hemletYoloV8_100epochs.pt").to(device)
+    
+    # 새로 훈련된 모델 우선 사용, 없으면 기존 모델 사용
+    model_path = "best.pt" if os.path.exists("best.pt") else "hemletYoloV8_100epochs.pt"
+    model = YOLO(model_path).to(device)
     class_names = model.names   
-    logger.info(f"✅ 모델 로드 성공. 클래스: {class_names} | 디바이스: {device}")
+    logger.info(f"✅ 모델 로드 성공: {model_path}")
+    logger.info(f"📊 클래스: {class_names} | 디바이스: {device}")
 except Exception as e:
     logger.error(f"❌ 모델 로드 실패: {e}")
     model = None
