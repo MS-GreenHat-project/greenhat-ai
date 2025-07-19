@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - hjh  # 필요 시 master로 변경
+
     paths:
       - 'app.py'              # Flask 애플리케이션
       - 'requirements.txt'    # Python 의존성
