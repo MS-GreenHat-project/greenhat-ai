@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-push:
-    # Action이 만든 커밋([CI skip])은 무시하도록 조건 추가
+    # Action이 만든 커밋([CI skip])은 무시하도록 조건 추가 (무한 루프 방지)
     if: "!contains(github.event.head_commit.message, '[CI skip]')"
     runs-on: ubuntu-latest
 
@@ -20,8 +20,18 @@ jobs:
       # 1. GitHub Repo Checkout
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
+
+      # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ 1. Linting 검증 과정 추가 ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
         with:
-          token: ${{ secrets.PAT }}
+          dockerfile: Dockerfile
+
+      - name: Lint Kubernetes Manifests
+        uses: karancode/yamllint-action@v2
+        with:
+          yamllint_file_or_dir: ./manifests
+      # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
       # 2. ACR 로그인
       - name: 'Login to Azure Container Registry'
@@ -31,16 +41,19 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      # 3. Docker 이미지 빌드 및 임시 변수 저장
-      - name: 'Build Docker Image'
-        id: build_image # 이 단계에 id를 부여하여 FULL_IMAGE 값을 다른 단계에서 사용
+      # 3. Docker 이미지 빌드 및 푸시 (Trivy 스캔을 위해 구조만 살짝 변경)
+      - name: 'Build and Scan'
         run: |
+          # 빌드할 이미지 전체 경로를 변수로 지정
           FULL_IMAGE=${{ secrets.AZURE_URL }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          
+          # 다른 단계에서 이 변수를 쓸 수 있도록 환경 변수로 내보내기
           echo "FULL_IMAGE=$FULL_IMAGE" >> $GITHUB_ENV
+          
           echo "▶️ Building image: $FULL_IMAGE"
           docker build -t $FULL_IMAGE .
 
-      # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ Trivy 스캔 단계 추가 ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+      # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ 2. Trivy 보안 검증 과정 추가 ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
@@ -50,10 +63,10 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-      # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+      # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
       # 4. 이미지 푸시 및 매니페스트 업데이트
-      - name: 'Push, Update, and Commit'
+      - name: 'Push image and Update manifest'
         run: |
           echo "🚀 Pushing image to ACR"
           docker push ${{ env.FULL_IMAGE }}
