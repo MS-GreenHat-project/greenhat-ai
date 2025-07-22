@@ -5,6 +5,7 @@ on:
     branches:
       - develop  # 필요 시 master로 변경
 
+
     paths:
       - 'app.py'              # Flask 애플리케이션
       - 'requirements.txt'    # Python 의존성
@@ -59,3 +60,5 @@ jobs:
           git add ${{ env.IMAGE_PATH }}
           git commit -m "Update image to ${{ env.IMAGE_TAG }} [CI skip]" || echo "No changes to commit"
           git push
+
+        
