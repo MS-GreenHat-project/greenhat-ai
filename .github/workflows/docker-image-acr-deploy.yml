@@ -3,10 +3,12 @@ name: Build and Push Yolov8 Demo Image to ACR
 on:
   push:
     branches:
-      - develop  # 필요 시 master로 변경
+      - develop
 
 jobs:
   build-and-push:
+    # Action이 만든 커밋([CI skip])은 무시하도록 조건 추가
+    if: "!contains(github.event.head_commit.message, '[CI skip]')"
     runs-on: ubuntu-latest
 
     env:
@@ -18,7 +20,8 @@ jobs:
       # 1. GitHub Repo Checkout
       - name: 'Checkout Repository'
         uses: actions/checkout@v4
-
+        with:
+          token: ${{ secrets.PAT }}
 
       # 2. ACR 로그인
       - name: 'Login to Azure Container Registry'
@@ -28,21 +31,37 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      # 3. Docker 이미지 빌드 및 푸시
-      - name: 'Build and Push Docker Image'
+      # 3. Docker 이미지 빌드 및 임시 변수 저장
+      - name: 'Build Docker Image'
+        id: build_image # 이 단계에 id를 부여하여 FULL_IMAGE 값을 다른 단계에서 사용
         run: |
           FULL_IMAGE=${{ secrets.AZURE_URL }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-
+          echo "FULL_IMAGE=$FULL_IMAGE" >> $GITHUB_ENV
           echo "▶️ Building image: $FULL_IMAGE"
           docker build -t $FULL_IMAGE .
 
+      # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ Trivy 스캔 단계 추가 ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.FULL_IMAGE }}
+          format: 'table'
+          exit-code: '1' # HIGH, CRITICAL 취약점 발견 시 파이프라인 중단
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+      # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+      # 4. 이미지 푸시 및 매니페스트 업데이트
+      - name: 'Push, Update, and Commit'
+        run: |
           echo "🚀 Pushing image to ACR"
-          docker push $FULL_IMAGE
+          docker push ${{ env.FULL_IMAGE }}
 
           echo "📝 Updating deployment manifest with new image"
-          sed -i "s|image: .*$|image: $FULL_IMAGE|" $IMAGE_PATH
+          sed -i "s|image: .*$|image: ${{ env.FULL_IMAGE }}|" $IMAGE_PATH
 
-      # 4. 푸시한 이미지로 manifest 이미지 경로 업데이트
+      # 5. 푸시한 이미지로 manifest 이미지 경로 업데이트
       - name: Commit and Push Updated Manifest
         run: |
           git config user.name "github-actions"
@@ -50,5 +69,3 @@ jobs:
           git add ${{ env.IMAGE_PATH }}
           git commit -m "Update image to ${{ env.IMAGE_TAG }} [CI skip]" || echo "No changes to commit"
           git push
-
-        
