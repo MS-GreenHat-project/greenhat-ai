@@ -28,7 +28,7 @@ jobs:
           dockerfile: Dockerfile
 
       - name: Lint Kubernetes Manifests
-        uses: karancode/yamllint-action@v2
+        uses: karancode/yamllint-action@v3
         with:
           yamllint_file_or_dir: ./manifests
       # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
