@@ -12,7 +12,7 @@ on:
       - '*.py'               # 모든 Python 파일
       - 'manifests/**'       # Kubernetes 매니페스트
       - '.github/workflows/backend/**'  # 백엔드 워크플로우 변경시
-      - 'best.pt'
+      - 'best*.pt'
 
 jobs:
   build-and-push:
