@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      IMAGE_NAME: yolov8-demo
+      IMAGE_NAME: yolov8-demo-dev
       IMAGE_TAG: ${{ github.run_number }}
       IMAGE_PATH: manifests/deployment.yaml
 
