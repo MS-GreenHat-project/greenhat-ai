@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: yolov8
-        image: greenhat2registry.azurecr.io/yolov8-demo:43
+        image: greenhat2registry.azurecr.io/yolov8-demo:44
         ports:
         - containerPort: 5000
         env:
