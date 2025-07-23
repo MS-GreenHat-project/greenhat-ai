@@ -73,9 +73,7 @@ try:
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     # 새로 훈련된 모델 우선 사용, 없으면 기존 모델 사용
-    import glob
-    best_model_files = glob.glob("best*.pt")
-    model_path = best_model_files[0] if best_model_files else "hemletYoloV8_100epochs.pt"
+    model_path = "best.pt" if os.path.exists("best.pt") else "hemletYoloV8_100epochs.pt"
     model = YOLO(model_path).to(device)
     class_names = model.names   
     logger.info(f"✅ 모델 로드 성공: {model_path}")
